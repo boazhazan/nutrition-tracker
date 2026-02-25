@@ -555,6 +555,14 @@
     </div>
 
     <button class="save-settings-btn" onclick="saveSettings()">💾 שמור הגדרות</button>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">🔄 העברת נתונים</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <button onclick="exportData()" style="flex:1;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:'Heebo',sans-serif;font-size:13px;font-weight:700;color:var(--accent);">📋 העתק נתונים</button>
+        <button onclick="openImportModal()" style="flex:1;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:'Heebo',sans-serif;font-size:13px;font-weight:700;color:var(--accent3);">📥 הדבק נתונים</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);">גבה ← העתק ← שלח לעצמך ← הדבק באפליקציה החדשה</div>
+    </div>
   </div>
 
   <!-- Daily Summary -->
@@ -2210,6 +2218,24 @@ function removeImage() {
 }
 
 // ===== ANALYZE =====
+// ===== AI HELPER =====
+async function callAI(bodyObj) {
+  const inClaudeAI = window.location.hostname.includes('claude.ai') || window.location.hostname.includes('anthropic');
+  if (inClaudeAI) {
+    return fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyObj)
+    });
+  } else {
+    return fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyObj)
+    });
+  }
+}
+
 async function analyzeFood() {
   const btn = document.getElementById('analyzeBtn');
   const spinner = document.getElementById('spinner');
@@ -2584,6 +2610,89 @@ function showConfirm(message, onConfirm) {
   document.body.appendChild(overlay);
   overlay.querySelector('#confirmOkBtn').onclick = () => { overlay.remove(); onConfirm(); };
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+// ===== BACKUP / RESTORE =====
+function exportData() {
+  const data = {
+    version: 1,
+    exportDate: new Date().toISOString(),
+    nutritionSettings: localStorage.getItem('nutritionSettings'),
+    dayHistory: localStorage.getItem('dayHistory'),
+    currentProfile: localStorage.getItem('currentProfile'),
+    showWife: localStorage.getItem('showWife'),
+    'meals-me': localStorage.getItem('meals-me'),
+    'meals-wife': localStorage.getItem('meals-wife'),
+    'water-me': localStorage.getItem('water-me'),
+    'water-wife': localStorage.getItem('water-wife'),
+    'coffee-me': localStorage.getItem('coffee-me'),
+    'coffee-wife': localStorage.getItem('coffee-wife'),
+    'workouts-me': localStorage.getItem('workouts-me'),
+    'workouts-wife': localStorage.getItem('workouts-wife'),
+    'weightLog-me': localStorage.getItem('weightLog-me'),
+    'weightLog-wife': localStorage.getItem('weightLog-wife'),
+  };
+  const json = JSON.stringify(data);
+
+  // Try clipboard API first
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(() => {
+      showToast('✅ הנתונים הועתקו ללוח! עכשיו הדבק באפליקציה החדשה');
+    }).catch(() => showExportModal(json));
+  } else {
+    showExportModal(json);
+  }
+}
+
+function showExportModal(json) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  overlay.innerHTML = `
+    <div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;width:100%;max-width:500px;max-height:80vh;display:flex;flex-direction:column;gap:12px;">
+      <div style="font-size:16px;font-weight:700;color:#e8eaf0;">📋 העתק את הנתונים</div>
+      <div style="font-size:12px;color:#8892a4;">סמן הכל ← העתק ← שמור בצד</div>
+      <textarea style="flex:1;min-height:200px;background:#22263a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e8eaf0;font-size:11px;padding:10px;font-family:monospace;resize:none;" readonly onclick="this.select()">${json}</textarea>
+      <div style="display:flex;gap:10px;">
+        <button onclick="this.closest('[style]').remove()" style="flex:1;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#8892a4;cursor:pointer;font-family:'Heebo',sans-serif;">סגור</button>
+        <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value);this.textContent='✅ הועתק!'" style="flex:1;padding:10px;background:#00d4aa;border:none;border-radius:10px;color:#000;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">📋 העתק הכל</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function openImportModal() {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  overlay.innerHTML = `
+    <div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;width:100%;max-width:500px;max-height:80vh;display:flex;flex-direction:column;gap:12px;">
+      <div style="font-size:16px;font-weight:700;color:#e8eaf0;">📥 הדבק נתונים</div>
+      <div style="font-size:12px;color:#8892a4;">הדבק כאן את ה-JSON שהעתקת מהאפליקציה הישנה</div>
+      <textarea id="importTextarea" style="flex:1;min-height:200px;background:#22263a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e8eaf0;font-size:11px;padding:10px;font-family:monospace;resize:none;" placeholder="הדבק כאן..."></textarea>
+      <div style="display:flex;gap:10px;">
+        <button onclick="this.closest('[style]').remove()" style="flex:1;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#8892a4;cursor:pointer;font-family:'Heebo',sans-serif;">ביטול</button>
+        <button onclick="importData(document.getElementById('importTextarea').value);this.closest('[style]').remove()" style="flex:1;padding:10px;background:#ffd93d;border:none;border-radius:10px;color:#000;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">📥 שחזר נתונים</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function importData(json) {
+  try {
+    const data = JSON.parse(json);
+    if (!data.version || !data.dayHistory) {
+      showToast('❌ נתונים לא תקינים');
+      return;
+    }
+    const keys = ['nutritionSettings','dayHistory','currentProfile','showWife',
+      'meals-me','meals-wife','water-me','water-wife',
+      'coffee-me','coffee-wife','workouts-me','workouts-wife',
+      'weightLog-me','weightLog-wife'];
+    keys.forEach(key => { if (data[key]) localStorage.setItem(key, data[key]); });
+    showToast('✅ הנתונים שוחזרו! טוען מחדש...');
+    setTimeout(() => location.reload(), 1500);
+  } catch(err) {
+    showToast('❌ שגיאה — בדוק שהטקסט תקין');
+  }
 }
 
 // ===== TOAST =====
