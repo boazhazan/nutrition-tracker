@@ -2662,6 +2662,7 @@ function showExportModal(json) {
 
 function openImportModal() {
   const overlay = document.createElement('div');
+  overlay.id = 'importOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
   overlay.innerHTML = `
     <div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;width:100%;max-width:500px;max-height:80vh;display:flex;flex-direction:column;gap:12px;">
@@ -2669,10 +2670,11 @@ function openImportModal() {
       <div style="font-size:12px;color:#8892a4;">הדבק כאן את ה-JSON שהעתקת מהאפליקציה הישנה</div>
       <textarea id="importTextarea" style="flex:1;min-height:200px;background:#22263a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e8eaf0;font-size:11px;padding:10px;font-family:monospace;resize:none;" placeholder="הדבק כאן..."></textarea>
       <div style="display:flex;gap:10px;">
-        <button onclick="this.closest('[style]').remove()" style="flex:1;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#8892a4;cursor:pointer;font-family:'Heebo',sans-serif;">ביטול</button>
-        <button onclick="importData(document.getElementById('importTextarea').value);this.closest('[style]').remove()" style="flex:1;padding:10px;background:#ffd93d;border:none;border-radius:10px;color:#000;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">📥 שחזר נתונים</button>
+        <button onclick="document.getElementById('importOverlay').remove()" style="flex:1;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#8892a4;cursor:pointer;font-family:'Heebo',sans-serif;">ביטול</button>
+        <button onclick="importData(document.getElementById('importTextarea').value);document.getElementById('importOverlay').remove()" style="flex:1;padding:10px;background:#ffd93d;border:none;border-radius:10px;color:#000;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">📥 שחזר נתונים</button>
       </div>
     </div>`;
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
   document.body.appendChild(overlay);
 }
 
