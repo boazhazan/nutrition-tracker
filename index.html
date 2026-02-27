@@ -2277,7 +2277,7 @@ async function analyzeFood() {
       messages.push({ role: 'user', content: `נתח ערכים תזונתיים: ${userDescription}` });
     }
 
-    const response = await callAI({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages });
+    const response = await callAI({ model: 'claude-3-5-sonnet-20241022', max_tokens: 1000, system: systemPrompt, messages });
 
     const data = await response.json();
     const text = data.content?.[0]?.text || '';
@@ -2521,7 +2521,7 @@ async function processChat(userMsg) {
   const typingEl = appendTyping();
 
   try {
-    const response = await callAI({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: buildContextForChat(), messages: chatHistory });
+    const response = await callAI({ model: 'claude-3-5-sonnet-20241022', max_tokens: 1000, system: buildContextForChat(), messages: chatHistory });
 
     const data = await response.json();
     const reply = data.content?.[0]?.text || 'מצטער, לא הצלחתי לענות.';
